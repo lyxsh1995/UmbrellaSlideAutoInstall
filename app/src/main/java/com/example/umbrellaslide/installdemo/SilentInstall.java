@@ -1,9 +1,20 @@
 package com.example.umbrellaslide.installdemo;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
+import android.widget.Toast;
+
+import com.elclcd.systempal.core.SysManager;
+import com.elclcd.systempal.core.SysManagerImpl;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
@@ -63,5 +74,16 @@ public class SilentInstall {
         }
         return result;
     }
+    public boolean install(Context context, String apkPath) {
+        Uri uri = Uri.fromFile(new File(apkPath));
+        Intent intent = new Intent();
+        intent.setClassName("com.android.packageinstaller", "com.android.packageinstaller.PackageInstallerActivity");
+        intent.setData(uri);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+        return true;
+    }
+
+
 
 }

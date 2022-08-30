@@ -7,10 +7,15 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.Process;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
+
+import com.elclcd.systempal.core.SysManager;
+import com.elclcd.systempal.core.SysManagerImpl;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -27,6 +32,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if (!SysManagerImpl.isInitialized()) {
+            //openTimerSwitchService 开启"定时开关机"模块,一个设备只允许一个应用开启该功能，多个应用开启会导致功能异常、失效。
+            SysManagerImpl.initContext(this,false);
+        }
         try {
             onSilentInstall();
         } catch (Exception e) {
@@ -63,9 +72,9 @@ public class MainActivity extends AppCompatActivity {
         File vFile = new File(sdDir.toString() + "/" + "UpdateSlide");
         List<String> extPaths = getExtSDCardPath();
         for (String path : extPaths) {
-            vFile = new File(path + "/" + "UpdateSlide");
+            vFile = new File(path + "/" + "UpdateLite");
         }
-        vFile = new File(MainActivity.getInnerSDCardPath() + "/UpdateSlide");  //改用内置sd卡
+        vFile = new File(MainActivity.getInnerSDCardPath() + "/UpdateLite");  //改用内置sd卡
         if (vFile.exists()) {//如果文件存在
             File temp = null;
             for (int i = 0; i < vFile.list().length; i++) {
@@ -86,34 +95,35 @@ public class MainActivity extends AppCompatActivity {
             RebootSystem();
         }
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                SilentInstall installHelper = new SilentInstall();
-                result = installHelper.install(apkPath);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (result) {
-                            Toast.makeText(MainActivity.this, "安装成功！", Toast.LENGTH_SHORT).show();
-                            deletandcopy(new File(apkPath));  //安装成功后删除历史版本 拷贝新版本apk；
-                            //看门狗；看门狗(WATCHDOG)功能是当系统发生严重错误，不能自行恢复时，看门狗能够让系统重置恢复正常,
-                            // 确保系统长时间可靠运行。系统看门狗的喂狗最长间隔为 12s, 请在 12s 之内发出清除 watchdog 广播。
-                            try {
-                                Thread.sleep(2000);
-                            } catch (Exception e) {
-
-                            }
-                            RebootSystem();
-                            //  doStartApplicationWithPackageName("com.android.umbrella");
-                        } else {
-                            Toast.makeText(MainActivity.this, "安装失败！", Toast.LENGTH_SHORT).show();
-                            RebootSystem();
-                        }
-                    }
-                });
-            }
-        }).start();
+        jdinstall(apkPath);
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                SilentInstall installHelper = new SilentInstall();
+//                result = installHelper.install(apkPath);
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        if (result) {
+//                            Toast.makeText(MainActivity.this, "安装成功！", Toast.LENGTH_SHORT).show();
+//                            deletandcopy(new File(apkPath));  //安装成功后删除历史版本 拷贝新版本apk；
+//                            //看门狗；看门狗(WATCHDOG)功能是当系统发生严重错误，不能自行恢复时，看门狗能够让系统重置恢复正常,
+//                            // 确保系统长时间可靠运行。系统看门狗的喂狗最长间隔为 12s, 请在 12s 之内发出清除 watchdog 广播。
+//                            try {
+//                                Thread.sleep(2000);
+//                            } catch (Exception e) {
+//
+//                            }
+//                            RebootSystem();
+//                            //  doStartApplicationWithPackageName("com.android.umbrella");
+//                        } else {
+//                            Toast.makeText(MainActivity.this, "安装失败！", Toast.LENGTH_SHORT).show();
+//                            RebootSystem();
+//                        }
+//                    }
+//                });
+//            }
+//        }).start();
 
     }
 
@@ -129,9 +139,9 @@ public class MainActivity extends AppCompatActivity {
             vFile = new File("");
             extPaths = getExtSDCardPath();
             for (String path : extPaths) {
-                vFile = new File(path + "/" + "UpdateSlide");
+                vFile = new File(path + "/" + "UpdateLite");
             }
-            vFile = new File(MainActivity.getInnerSDCardPath() + "/UpdateSlide");  //改用内置sd卡
+            vFile = new File(MainActivity.getInnerSDCardPath() + "/UpdateLite");  //改用内置sd卡
             if (vFile.exists()) {//如果文件存在
                 File temp = null;
                 for (int i = 0; i < vFile.list().length; i++) {
@@ -205,53 +215,37 @@ public class MainActivity extends AppCompatActivity {
         return lResult;
     }
 
-
-    private void doStartApplicationWithPackageName(String packagename) {
-
-        // 通过包名获取此APP详细信息，包括Activities、services、versioncode、name等等
-        PackageInfo packageinfo = null;
-        try {
-            packageinfo = getPackageManager().getPackageInfo(packagename, 0);
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-        if (packageinfo == null) {
-            return;
-        }
-
-        // 创建一个类别为CATEGORY_LAUNCHER的该包名的Intent
-        Intent resolveIntent = new Intent(Intent.ACTION_MAIN, null);
-        resolveIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-        resolveIntent.setPackage(packageinfo.packageName);
-
-        // 通过getPackageManager()的queryIntentActivities方法遍历
-        List<ResolveInfo> resolveinfoList = getPackageManager()
-                .queryIntentActivities(resolveIntent, 0);
-
-        ResolveInfo resolveinfo = resolveinfoList.iterator().next();
-        if (resolveinfo != null) {
-            // packagename = 参数packname
-            String packageName = resolveinfo.activityInfo.packageName;
-            // 这个就是我们要找的该APP的LAUNCHER的Activity[组织形式：packagename.mainActivityname]
-            String className = resolveinfo.activityInfo.name;
-            // LAUNCHER Intent
-            Intent intent = new Intent(Intent.ACTION_MAIN);
-            intent.addCategory(Intent.CATEGORY_LAUNCHER);
-
-            // 设置ComponentName参数1:packagename参数2:MainActivity路径
-            ComponentName cn = new ComponentName(packageName, className);
-
-            intent.setComponent(cn);
-            startActivity(intent);
-        }
-    }
     private void RebootSystem()   //重启安卓板；
     {
-
-        Intent intent = new Intent("com.android.action.reboot");
+        PackageManager packageManager = getPackageManager();
+        Intent intent = packageManager.getLaunchIntentForPackage("com.khkj.administrator.umbrellalite");
+        startActivity(intent);
+        intent = new Intent("com.android.action.reboot");
         sendBroadcast(intent);
-
+//        SysManagerImpl.getInstance().reboot();
     }
 
+    public boolean jdinstall(String apkPat){
+        try {
+            SysManagerImpl.getInstance().installAPK(apkPat, new SysManager.OnHandleApkListener() {
+                @Override
+                public void onResult(int i, String s) {
+                    Log.d(i+"",s);
+                    if(i == 0 ){
+                        deletandcopy(new File(apkPath));  //安装成功后删除历史版本 拷贝新版本apk；
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                RebootSystem();
+                            }
+                        },3000);
+                    }
+                }
+            });
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
 
