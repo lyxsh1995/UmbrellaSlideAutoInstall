@@ -2,6 +2,7 @@ package com.example.umbrellaslide.installdemo;
 
 import android.app.ActivityManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -24,57 +25,61 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class MainActivity extends AppCompatActivity {
     String apkPath = "";//apk路径；
     private boolean result;
+    private String folder = "/Update";//文件夹名
+    private boolean isInstall = false;
+    public static long um_heatbeat_time = 0;
+    PackageManager packageManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        packageManager = getPackageManager();
+
         if (!SysManagerImpl.isInitialized()) {
             //openTimerSwitchService 开启"定时开关机"模块,一个设备只允许一个应用开启该功能，多个应用开启会导致功能异常、失效。
-            SysManagerImpl.initContext(this,false);
+            SysManagerImpl.initContext(this, false);
         }
-        try {
-            onSilentInstall();
-        } catch (Exception e) {
-            //看门狗；看门狗(WATCHDOG)功能是当系统发生严重错误，不能自行恢复时，看门狗能够让系统重置恢复正常,
-            // 确保系统长时间可靠运行。系统看门狗的喂狗最长间隔为 12s, 请在 12s 之内发出清除 watchdog 广播。
-            RebootSystem();
-            e.printStackTrace();
+
+        new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(60 * 1000);
+                    if (System.currentTimeMillis() - um_heatbeat_time > 60 * 1000) {
+                        Intent intent = packageManager.getLaunchIntentForPackage("com.android.umbrella");
+                        startActivity(intent);
+                        intent = packageManager.getLaunchIntentForPackage("com.khkj.administrator.umbrellalite");
+                        startActivity(intent);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+
+        }).start();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isInstall = getIntent().getBooleanExtra("isInstall", false);
+        if (isInstall) {
+            try {
+                onSilentInstall();
+            } catch (Exception e) {
+                //看门狗；看门狗(WATCHDOG)功能是当系统发生严重错误，不能自行恢复时，看门狗能够让系统重置恢复正常,
+                // 确保系统长时间可靠运行。系统看门狗的喂狗最长间隔为 12s, 请在 12s 之内发出清除 watchdog 广播。
+                RebootSystem();
+                e.printStackTrace();
+            }
         }
     }
 
     public void onSilentInstall() {
-//        try {  //关闭旧app  自动安装新app并重启安卓板；
-//            ActivityManager am = (ActivityManager) getApplicationContext().getSystemService(getApplicationContext().ACTIVITY_SERVICE);
-//            List<ActivityManager.RunningAppProcessInfo> myappprocess = am.getRunningAppProcesses();
-//            for (ActivityManager.RunningAppProcessInfo info : myappprocess) {
-//
-//                if (info.processName.equals("com.example.umbrellaslide.installdemo")) {
-//
-//                    int pid = info.pid;
-//                    Process.killProcess(pid);
-//                    break;
-//                }
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-        File sdDir = null;
-        boolean sdCardExist = Environment.getExternalStorageState()
-                .equals(android.os.Environment.MEDIA_MOUNTED);//判断sd卡是否存在
-        if (sdCardExist) {
-            sdDir = Environment.getExternalStorageDirectory();//获取跟目录
-        }
-
-        File vFile = new File(sdDir.toString() + "/" + "UpdateSlide");
-        List<String> extPaths = getExtSDCardPath();
-        for (String path : extPaths) {
-            vFile = new File(path + "/" + "UpdateLite");
-        }
-        vFile = new File(MainActivity.getInnerSDCardPath() + "/UpdateLite");  //改用内置sd卡
+        File vFile = new File(MainActivity.getInnerSDCardPath() + folder);  //改用内置sd卡
         if (vFile.exists()) {//如果文件存在
             File temp = null;
             for (int i = 0; i < vFile.list().length; i++) {
@@ -96,52 +101,13 @@ public class MainActivity extends AppCompatActivity {
         }
 
         jdinstall(apkPath);
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                SilentInstall installHelper = new SilentInstall();
-//                result = installHelper.install(apkPath);
-//                runOnUiThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        if (result) {
-//                            Toast.makeText(MainActivity.this, "安装成功！", Toast.LENGTH_SHORT).show();
-//                            deletandcopy(new File(apkPath));  //安装成功后删除历史版本 拷贝新版本apk；
-//                            //看门狗；看门狗(WATCHDOG)功能是当系统发生严重错误，不能自行恢复时，看门狗能够让系统重置恢复正常,
-//                            // 确保系统长时间可靠运行。系统看门狗的喂狗最长间隔为 12s, 请在 12s 之内发出清除 watchdog 广播。
-//                            try {
-//                                Thread.sleep(2000);
-//                            } catch (Exception e) {
-//
-//                            }
-//                            RebootSystem();
-//                            //  doStartApplicationWithPackageName("com.android.umbrella");
-//                        } else {
-//                            Toast.makeText(MainActivity.this, "安装失败！", Toast.LENGTH_SHORT).show();
-//                            RebootSystem();
-//                        }
-//                    }
-//                });
-//            }
-//        }).start();
-
     }
 
 
     public void deletandcopy(File newfile) {
         try {
             //删除 apk；
-            File vFile = new File("");
-            List<String> extPaths = getExtSDCardPath();
-
-
-            //删除升级文件夹里文件；
-            vFile = new File("");
-            extPaths = getExtSDCardPath();
-            for (String path : extPaths) {
-                vFile = new File(path + "/" + "UpdateLite");
-            }
-            vFile = new File(MainActivity.getInnerSDCardPath() + "/UpdateLite");  //改用内置sd卡
+            File vFile = new File(MainActivity.getInnerSDCardPath() + folder);  //改用内置sd卡
             if (vFile.exists()) {//如果文件存在
                 File temp = null;
                 for (int i = 0; i < vFile.list().length; i++) {
@@ -151,18 +117,11 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-
         } catch (Exception e) {
             System.out.println("复制整个文件夹内容操作出错");
             e.printStackTrace();
         }
     }
-  /*  public void onForwardToAccessibility(View view) {
-
-    }
-    public void onSmartInstall(View view) {
-
-    }*/
 
     /**
      * 判断手机是否拥有Root权限。
@@ -178,12 +137,14 @@ public class MainActivity extends AppCompatActivity {
         }
         return bool;
     }
+
     /**
      * 获取内置SD卡路径
      */
     static String getInnerSDCardPath() {
         return Environment.getExternalStorageDirectory().getPath();
     }
+
     /**
      * 获取外置SD卡路径
      *
@@ -218,34 +179,70 @@ public class MainActivity extends AppCompatActivity {
     private void RebootSystem()   //重启安卓板；
     {
         PackageManager packageManager = getPackageManager();
-        Intent intent = packageManager.getLaunchIntentForPackage("com.khkj.administrator.umbrellalite");
-        startActivity(intent);
-        intent = new Intent("com.android.action.reboot");
+        try {
+            Intent intent = packageManager.getLaunchIntentForPackage("com.android.umbrella");
+            startActivity(intent);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            Intent intent = packageManager.getLaunchIntentForPackage("com.khkj.administrator.umbrellalite");
+            startActivity(intent);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Intent intent = new Intent("com.android.action.reboot");
         sendBroadcast(intent);
-//        SysManagerImpl.getInstance().reboot();
+        if (SysManagerImpl.isInitialized()) {
+            SysManagerImpl.getInstance().reboot();
+        }
     }
 
-    public boolean jdinstall(String apkPat){
+    public boolean jdinstall(String apkPat) {
         try {
             SysManagerImpl.getInstance().installAPK(apkPat, new SysManager.OnHandleApkListener() {
                 @Override
                 public void onResult(int i, String s) {
-                    Log.d(i+"",s);
-                    if(i == 0 ){
+                    Log.d(i + "", s);
+                    if (i == 0) {
                         deletandcopy(new File(apkPath));  //安装成功后删除历史版本 拷贝新版本apk；
                         new Handler().postDelayed(new Runnable() {
                             @Override
                             public void run() {
                                 RebootSystem();
                             }
-                        },3000);
+                        }, 3000);
                     }
                 }
             });
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return false;
+    }
+
+    /**
+     * 判断应用是否在运行
+     *
+     * @return
+     */
+    public static boolean isAppRunning(Context context, String pageName) {
+        boolean isAppRunning = false;
+        try {
+            ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+            List<ActivityManager.RunningTaskInfo> list = activityManager.getRunningTasks(100);
+
+            for (ActivityManager.RunningTaskInfo info : list) {
+                if (info.topActivity.getPackageName().equals(pageName) || info.baseActivity.getPackageName().equals(pageName)) {
+                    isAppRunning = true;
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return isAppRunning;
     }
 }
 

@@ -38,11 +38,15 @@ android {
         }
 
     }
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    testCompile 'junit:junit:4.12'
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    debugImplementation('junit:junit:4.12')
     implementation 'com.android.support:appcompat-v7:23.2.1'
     implementation(name: 'systempal_library-release_20210902', ext: 'aar')
 }
