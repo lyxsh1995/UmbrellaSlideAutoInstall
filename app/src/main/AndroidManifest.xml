@@ -27,6 +27,8 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="umbrella.HEATBEAT"/>
+                <action android:name="umbrella.REBOOT"/>
+                <action android:name="umbrella.INSTALL"/>
             </intent-filter>
         </receiver>
     </application>
