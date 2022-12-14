@@ -13,5 +13,5 @@
         android:id="@+id/textView"
         android:layout_width="86dp"
         android:layout_height="66dp"
-        android:text="V1.1                                                                                      " />
+        android:text="V1.2                                                                                      " />
 </RelativeLayout>

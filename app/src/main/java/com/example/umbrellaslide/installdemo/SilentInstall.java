@@ -53,7 +53,7 @@ public class SilentInstall {
             while ((line = errorStream.readLine()) != null) {
                 msg += line;
             }
-            Log.d("TAG", "install msg is " + msg);
+            addLog.addlog("TAG", "install msg is " + msg);
             // 如果执行结果中包含Failure字样就认为是安装失败，否则就认为安装成功
             if (!msg.contains("Failure")) {
                 result = true;

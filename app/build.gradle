@@ -8,7 +8,12 @@ android {
         minSdkVersion 22
         targetSdkVersion 23
         versionCode 1
-        versionName "1.1"
+        versionName "1.2"
+        manifestPlaceholders = [
+                GETUI_APP_ID    : "3ohLYyeOjf51hyfJvnHS5A",
+                GETUI_APP_KEY   : "mzSyXPptJLAveuGOvhTLa6",
+                GETUI_APP_SECRET: "rYZukKgvZt7ODGWdfGvUh8"
+        ]
     }
     //签名打包 保证一致性  升级;
     signingConfigs {
@@ -49,4 +54,6 @@ dependencies {
     debugImplementation('junit:junit:4.12')
     implementation 'com.android.support:appcompat-v7:23.2.1'
     implementation(name: 'systempal_library-release_20210902', ext: 'aar')
+    implementation 'com.getui:sdk:2.10.2.0'
+    implementation 'com.loopj.android:android-async-http:1.4.11'
 }
