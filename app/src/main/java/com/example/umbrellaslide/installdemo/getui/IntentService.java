@@ -60,8 +60,7 @@ public class IntentService extends GTIntentService {
         // 第三方回执调用接口，actionid范围为90000-90999，可根据业务场景执行
         boolean result = PushManager.getInstance().sendFeedbackMessage(context, taskid, messageid, 90001);
         addLog.addlog(TAG, "call sendFeedbackMessage = " + (result ? "success" : "failed"));
-        addLog.addlog(TAG, "onReceiveMessageData -> " + "appid = " + appid + "\ntaskid = " + taskid + "\nmessageid = " + messageid + "\npkg = " + pkg
-                + "\ncid = " + cid);
+        addLog.addlog(TAG, "onReceiveMessageData -> " + "   appid = " + appid + "   taskid = " + taskid + "   messageid = " + messageid + "   pkg = " + pkg + "   cid = " + cid);
         if (payload == null) {
             addLog.addlog(TAG, "receiver payload = null");
         } else {

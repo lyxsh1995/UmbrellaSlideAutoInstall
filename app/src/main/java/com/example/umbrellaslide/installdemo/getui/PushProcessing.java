@@ -158,7 +158,9 @@ public class PushProcessing {
                 e.printStackTrace();
             }
             try {
-                new AsyncHttpClient().post("https://www.mosunshine.com/stream/terminal/log/upload", params, MainActivity.asyncHttpResponseHandler);   //生产地址上传
+                AsyncHttpClient asyncHttpClient = new AsyncHttpClient();
+                asyncHttpClient.setConnectTimeout(20000);
+                asyncHttpClient.post("https://www.mosunshine.com/stream/terminal/log/upload", params, MainActivity.asyncHttpResponseHandler);   //生产地址上传
             } catch (Exception e) {
                 e.printStackTrace();
             }
