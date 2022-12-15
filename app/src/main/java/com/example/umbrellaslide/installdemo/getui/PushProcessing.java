@@ -169,14 +169,14 @@ public class PushProcessing {
                 if (bitmap != null) {
                     try {
                         String sdCardPath = Environment.getExternalStorageDirectory().getPath();
-                        String filePath1 = sdCardPath + File.separator + "screenshot";
+                        String filePath1 = sdCardPath + File.separator + "screenshot.png";
                         File file1 = new File(filePath1);
                         FileOutputStream os1 = new FileOutputStream(file1);
                         bitmap.compress(Bitmap.CompressFormat.PNG, 100, os1);
                         os1.flush();
                         os1.close();
                         bitmap.recycle();
-                        onClickUpload("screenshot");
+                        onClickUpload("screenshot.png");
                     } catch (Exception e) {
                         bitmap.recycle();
                     }
