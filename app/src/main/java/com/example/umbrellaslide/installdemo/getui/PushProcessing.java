@@ -1,14 +1,18 @@
 package com.example.umbrellaslide.installdemo.getui;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.media.projection.MediaProjectionManager;
 import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 
+import com.elclcd.systempal.core.SysManager;
+import com.elclcd.systempal.core.SysManagerImpl;
 import com.example.umbrellaslide.installdemo.MainActivity;
 import com.example.umbrellaslide.installdemo.addLog;
 import com.loopj.android.http.AsyncHttpClient;
@@ -40,11 +44,11 @@ public class PushProcessing {
         callback(object.optString("id"));//通知服务器
         switch (actionName) {
             case "TerminalRestart":    //重启系统；
-                addLog.addlog("个推", "接收到指令","重启");
+                addLog.addlog("个推", "接收到指令", "重启");
                 MainActivity.RebootSystem(MainActivity.mainActivitythis);
                 break;
             case "UploadTerminalLog":     //日志上传
-                addLog.addlog("个推", "接收到指令","拉取日志");
+                addLog.addlog("个推", "接收到指令", "拉取日志");
                 try {
                     JSONObject obj = new JSONObject(object.optString("actionExt"));
                     String startDate = obj.optString("startDate");
@@ -107,14 +111,8 @@ public class PushProcessing {
                 }
                 break;
             case "TerminalCaptureScreen":   //截屏上传
-                addLog.addlog("个推", "接收到指令","截屏");
-                try {
-                    if (screenshot("screenshot.png")) {
-                        onClickUpload("screenshot.png");  //定时抽帧；
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                addLog.addlog("个推", "接收到指令", "截屏");
+                screenshot();
                 break;
             default:
                 break;
@@ -143,7 +141,7 @@ public class PushProcessing {
     public static void uploadLog(String filepath, String filename) {
         File file = new File(filepath, filename);
         if (file.exists() && file.length() > 0) {
-            addLog.addlog("个推", "终端日志文件上传：",filename,  "文件读取成功");
+            addLog.addlog("个推", "终端日志文件上传：", filename, "文件读取成功");
             RequestParams params = new RequestParams();
             params.setContentEncoding("UTF-8");
             params.put("terminalNo", MainActivity.terminal_no);
@@ -159,39 +157,34 @@ public class PushProcessing {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }else{
-            addLog.addlog("个推", "终端日志文件上传：",filename, "文件读取失败");
+        } else {
+            addLog.addlog("个推", "终端日志文件上传：", filename, "文件读取失败");
         }
     }
 
-    public boolean screenshot(String pngName)  //广告视频抽帧
+    public void screenshot()  //广告视频抽帧
     {
-        boolean res = false;
         try {
-            // 获取屏幕
-            View view = MainActivity.mainActivitythis.getWindow().getDecorView();
-            view.setDrawingCacheEnabled(true);
-            view.buildDrawingCache();
-            Bitmap bitmap = Bitmap.createBitmap(view.getDrawingCache(), 0, 0, view.getMeasuredWidth(), view.getMeasuredHeight());
-            if (bitmap != null) {
-                try {
-                    String sdCardPath = Environment.getExternalStorageDirectory().getPath();
-                    String filePath1 = sdCardPath + File.separator + pngName;
-                    File file1 = new File(filePath1);
-                    FileOutputStream os1 = new FileOutputStream(file1);
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, os1);
-                    os1.flush();
-                    os1.close();
-                    res = true;
-                } catch (Exception e) {
-                    bitmap.recycle();
+            SysManagerImpl.getInstance().takeScreenshot(bitmap -> {
+                if (bitmap != null) {
+                    try {
+                        String sdCardPath = Environment.getExternalStorageDirectory().getPath();
+                        String filePath1 = sdCardPath + File.separator + "screenshot";
+                        File file1 = new File(filePath1);
+                        FileOutputStream os1 = new FileOutputStream(file1);
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, os1);
+                        os1.flush();
+                        os1.close();
+                        bitmap.recycle();
+                        onClickUpload("screenshot");
+                    } catch (Exception e) {
+                        bitmap.recycle();
+                    }
                 }
-                bitmap.recycle();
-            }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return res;
     }
 
     public void onClickUpload(String pngName) {   //广告抽帧图片上传服务器
