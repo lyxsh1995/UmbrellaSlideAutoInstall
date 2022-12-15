@@ -33,25 +33,18 @@ import java.util.Map;
  * Created by Administrator on 2017/11/17.
  */
 public class PushProcessing {
-    Cursor curDev = null;
-    ContentValues InitialValues = null;
-    static ContextWrapper contextWrapper = new ContextWrapper(MainActivity.mainActivitythis);
-
     public void Processing(JSONObject object) {
         String actionName = object.optString("actionName");
-        String terminalNo = object.optString("terminalNo");
-        String terminalSerialNo = object.optString("terminalSerialNo");
+//        String terminalNo = object.optString("terminalNo");
+//        String terminalSerialNo = object.optString("terminalSerialNo");
         callback(object.optString("id"));//通知服务器
         switch (actionName) {
             case "TerminalRestart":    //重启系统；
-                addLog.addlog("个推", "接收到重启指令");
-                Intent intent = new Intent("com.android.action.reboot");
-                contextWrapper.sendBroadcast(intent);
-                intent = new Intent("umbrella.REBOOT");
-                contextWrapper.sendBroadcast(intent);
+                addLog.addlog("个推", "接收到指令","重启");
+                MainActivity.RebootSystem(MainActivity.mainActivitythis);
                 break;
             case "UploadTerminalLog":     //日志上传
-                addLog.addlog("个推", "接收到拉取日志指令");
+                addLog.addlog("个推", "接收到指令","拉取日志");
                 try {
                     JSONObject obj = new JSONObject(object.optString("actionExt"));
                     String startDate = obj.optString("startDate");
@@ -103,7 +96,6 @@ public class PushProcessing {
                                 dataRecord.put("terminalNo", MainActivity.terminal_no);
                                 JSONObject json = new JSONObject(dataRecord);
                                 uploadLog(path, fileName);
-                                addLog.addlog("个推", "终端日志文件上传：", "时间：" + VeDate.getStringDateTime(), "", "日志名称:" + fileName, "");
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -113,7 +105,9 @@ public class PushProcessing {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                break;
             case "TerminalCaptureScreen":   //截屏上传
+                addLog.addlog("个推", "接收到指令","截屏");
                 try {
                     if (screenshot("screenshot.png")) {
                         onClickUpload("screenshot.png");  //定时抽帧；
@@ -149,6 +143,7 @@ public class PushProcessing {
     public static void uploadLog(String filepath, String filename) {
         File file = new File(filepath, filename);
         if (file.exists() && file.length() > 0) {
+            addLog.addlog("个推", "终端日志文件上传：",filename,  "文件读取成功");
             RequestParams params = new RequestParams();
             params.setContentEncoding("UTF-8");
             params.put("terminalNo", MainActivity.terminal_no);
@@ -164,6 +159,8 @@ public class PushProcessing {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }else{
+            addLog.addlog("个推", "终端日志文件上传：",filename, "文件读取失败");
         }
     }
 
@@ -192,7 +189,7 @@ public class PushProcessing {
                 bitmap.recycle();
             }
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
         return res;
     }

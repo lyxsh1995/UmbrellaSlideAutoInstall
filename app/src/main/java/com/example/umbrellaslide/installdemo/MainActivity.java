@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mainActivitythis = this;
         packageManager = getPackageManager();
         sharedPreferences = getSharedPreferences("terminal", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
@@ -176,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
         return Environment.getExternalStorageDirectory().getPath();
     }
 
-    private static void RebootSystem(Context context)   //重启安卓板；
+    public static void RebootSystem(Context context)   //重启安卓板；
     {
         addLog.addlog("自动升级程序", "重启安卓板");
         PackageManager packageManager = context.getPackageManager();
