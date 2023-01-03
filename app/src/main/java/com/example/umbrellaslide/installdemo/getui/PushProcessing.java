@@ -37,15 +37,30 @@ import java.util.Map;
  * Created by Administrator on 2017/11/17.
  */
 public class PushProcessing {
-    public void Processing(JSONObject object) {
+    Context context;
+
+    public void Processing(Context context, JSONObject object) {
+        this.context = context;
         String actionName = object.optString("actionName");
-//        String terminalNo = object.optString("terminalNo");
+        String terminalNo = object.optString("terminalNo");
 //        String terminalSerialNo = object.optString("terminalSerialNo");
+        if (!terminalNo.equals(MainActivity.terminal_no)) {
+            addLog.addlog("个推", "接收到指令", "终端编号不匹配", "本地终端号:" + MainActivity.terminal_no, "指令终端号:" + terminalNo);
+            return;
+        }
         callback(object.optString("id"));//通知服务器
         switch (actionName) {
             case "TerminalRestart":    //重启系统；
                 addLog.addlog("个推", "接收到指令", "重启");
-                MainActivity.RebootSystem(MainActivity.mainActivitythis);
+                try {
+                    MainActivity.RebootSystem(context);
+                } catch (Exception e) {
+                    addLog.addlog(e.toString());
+                    e.printStackTrace();
+                }
+                if (SysManagerImpl.isInitialized()) {
+                    SysManagerImpl.getInstance().reboot();
+                }
                 break;
             case "UploadTerminalLog":     //日志上传
                 addLog.addlog("个推", "接收到指令", "拉取日志");
@@ -107,6 +122,7 @@ public class PushProcessing {
                     }
 
                 } catch (Exception e) {
+                    addLog.addlog(e.toString());
                     e.printStackTrace();
                 }
                 break;

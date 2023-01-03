@@ -69,7 +69,7 @@ public class IntentService extends GTIntentService {
                 addLog.addlog(TAG, "receiver payload = " + data);
                 JSONObject object = JSONAnalysis(data);
                 push = new PushProcessing();
-                push.Processing(object);
+                push.Processing(context,object);
 //                JSONArray obj = new JSONArray(object.optString("actionExt"));
 //                String respcode = object.optString("respcode");
                 // 测试消息为了观察数据变化
@@ -96,7 +96,7 @@ public class IntentService extends GTIntentService {
     public void onReceiveClientId(Context context, String clientid) {
         addLog.addlog(TAG, "onReceiveClientId -> " + "clientid = " + clientid);
         MainActivity.GTclientid = clientid;
-        if (!MainActivity.GTclientid.equals("")) {
+        if (!MainActivity.GTclientid.equals("") && !MainActivity.terminal_no.equals("")) {
             JSONObject obj = new JSONObject();
             try {
                 obj.put("terminal_no", MainActivity.terminal_no);

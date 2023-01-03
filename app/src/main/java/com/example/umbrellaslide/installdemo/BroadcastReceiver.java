@@ -19,11 +19,11 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
                 break;
             case REBOOT:
                 addLog.addlog("自动升级程序", "接收到重启广播");
-                if (SysManagerImpl.isInitialized()) {
-                    SysManagerImpl.getInstance().reboot();
+                try {
+                    MainActivity.RebootSystem(context);
+                }catch (Exception e){
+                    e.printStackTrace();
                 }
-                Intent mintent = new Intent("com.android.action.reboot");
-                context.sendBroadcast(mintent);
                 break;
             case INSTALL:
                 addLog.addlog("自动升级程序", "接收到升级广播");

@@ -108,6 +108,12 @@ public class MainActivity extends AppCompatActivity {
             SysManagerImpl.initContext(this, false);
         }
 
+        if (SysManagerImpl.isInitialized()) {
+            addLog.addlog("自动升级程序", "加载京东权限模块", "成功");
+        }else{
+            addLog.addlog("自动升级程序", "加载京东权限模块", "失败");
+        }
+
         PushManager.getInstance().initialize(MainActivity.this, PushService.class);
         // com.getui.demo.DemoIntentService 为第三方自定义的推送服务事件接收类
         PushManager.getInstance().registerPushIntentService(MainActivity.this, IntentService.class);
@@ -135,6 +141,11 @@ public class MainActivity extends AppCompatActivity {
         jdinstall(MainActivity.this);
     }
 
+    @Override
+    protected void onDestroy() {
+        addLog.addlog("自动升级程序", "退出");
+        super.onDestroy();
+    }
 
     public static void deletandcopy() {
         try {
@@ -221,6 +232,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public static void install(Context context, String apkPath) {
+        addLog.addlog("自动升级程序", "自动升级", "开始安装");
         try {
             SysManagerImpl.getInstance().installAPK(apkPath, new SysManager.OnHandleApkListener() {
                 @Override
