@@ -44,7 +44,7 @@ public class PushProcessing {
         String actionName = object.optString("actionName");
         String terminalNo = object.optString("terminalNo");
 //        String terminalSerialNo = object.optString("terminalSerialNo");
-        if (!terminalNo.equals(MainActivity.terminal_no)) {
+        if (!MainActivity.terminal_no.equals("") && !terminalNo.equals(MainActivity.terminal_no)) {
             addLog.addlog("个推", "接收到指令", "终端编号不匹配", "本地终端号:" + MainActivity.terminal_no, "指令终端号:" + terminalNo);
             return;
         }
