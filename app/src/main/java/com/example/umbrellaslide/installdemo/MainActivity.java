@@ -53,8 +53,6 @@ public class MainActivity extends AppCompatActivity {
     public static String serverURL = "https://www.mosunshine.com/Umbrella/Control/";
     private static final String[] permission = new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
-    public static AsyncHttpResponseHandler asyncHttpResponseHandler;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,18 +70,6 @@ public class MainActivity extends AppCompatActivity {
             terminal_no = sharedPreferences.getString("no", "");
         }
         addLog.addlog("自动升级程序", "启动", "terminal_no", terminal_no);
-
-        asyncHttpResponseHandler = new AsyncHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-                addLog.addlog("自动升级程序", "上传", "成功", statusCode + "");
-            }
-
-            @Override
-            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                addLog.addlog("自动升级程序", "上传", "失败", statusCode + "");
-            }
-        };
 
         TextView textView = (TextView) findViewById(R.id.textView);
         textView.setOnClickListener(new View.OnClickListener() {

@@ -33,13 +33,15 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import cz.msebera.android.httpclient.Header;
+
 /**
  * Created by Administrator on 2017/11/17.
  */
 public class PushProcessing {
     Context context;
 
-    public void Processing(Context context, JSONObject object) {
+    public void Processing(Context context, JSONObject object,AsyncHttpResponseHandler httpResponseHandler) {
         this.context = context;
         String actionName = object.optString("actionName");
         String terminalNo = object.optString("terminalNo");
@@ -112,9 +114,9 @@ public class PushProcessing {
                                 vFile = new File(Environment.getExternalStorageDirectory().getPath() + "/UmLog");
                                 //  File logFile = new File(vFile.getPath() + File.separator + "2017-11-20.txt");
                                 Map<String, Object> dataRecord = new HashMap<String, Object>();
-                                dataRecord.put("terminalNo", MainActivity.terminal_no);
+                                dataRecord.put("terminalNo", terminalNo);
                                 JSONObject json = new JSONObject(dataRecord);
-                                uploadLog(path, fileName);
+                                uploadLog(path, fileName,terminalNo,httpResponseHandler);
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -128,7 +130,7 @@ public class PushProcessing {
                 break;
             case "TerminalCaptureScreen":   //截屏上传
                 addLog.addlog("个推", "接收到指令", "截屏");
-                screenshot();
+                screenshot(terminalNo,httpResponseHandler);
                 break;
             default:
                 break;
@@ -154,13 +156,13 @@ public class PushProcessing {
         }
     }
 
-    public static void uploadLog(String filepath, String filename) {
+    public static void uploadLog(String filepath, String filename,String terminalNo,AsyncHttpResponseHandler httpResponseHandler) {
         File file = new File(filepath, filename);
         if (file.exists() && file.length() > 0) {
             addLog.addlog("个推", "终端日志文件上传：", filename, "文件读取成功");
             RequestParams params = new RequestParams();
             params.setContentEncoding("UTF-8");
-            params.put("terminalNo", MainActivity.terminal_no);
+            params.put("terminalNo", terminalNo);
             try {
                 params.put("log", file);
             } catch (FileNotFoundException e) {
@@ -168,8 +170,8 @@ public class PushProcessing {
             }
             try {
                 AsyncHttpClient asyncHttpClient = new AsyncHttpClient();
-                asyncHttpClient.setConnectTimeout(20000);
-                asyncHttpClient.post("https://www.mosunshine.com/stream/terminal/log/upload", params, MainActivity.asyncHttpResponseHandler);   //生产地址上传
+                asyncHttpClient.setConnectTimeout(60000);
+                asyncHttpClient.post("https://www.mosunshine.com/stream/terminal/log/upload", params, httpResponseHandler);   //生产地址上传
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -178,7 +180,7 @@ public class PushProcessing {
         }
     }
 
-    public void screenshot()  //广告视频抽帧
+    public void screenshot(String terminalNo,AsyncHttpResponseHandler httpResponseHandler)  //广告视频抽帧
     {
         try {
             SysManagerImpl.getInstance().takeScreenshot(bitmap -> {
@@ -192,7 +194,7 @@ public class PushProcessing {
                         os1.flush();
                         os1.close();
                         bitmap.recycle();
-                        onClickUpload("screenshot.png");
+                        onClickUpload("screenshot.png",terminalNo,httpResponseHandler);
                     } catch (Exception e) {
                         bitmap.recycle();
                     }
@@ -203,17 +205,17 @@ public class PushProcessing {
         }
     }
 
-    public void onClickUpload(String pngName) {   //广告抽帧图片上传服务器
+    public void onClickUpload(String pngName,String terminalNo,AsyncHttpResponseHandler httpResponseHandler) {   //广告抽帧图片上传服务器
         try {
             String path = Environment.getExternalStorageDirectory().getPath() + File.separator;
             String file = pngName;
             Map<String, Object> dataRecord = new HashMap<String, Object>();
-            dataRecord.put("terminal_no", MainActivity.terminal_no);
+            dataRecord.put("terminal_no", terminalNo);
             dataRecord.put("capture_time", VeDate.getStringDateTime());
             dataRecord.put("city_no", "0021");
-            dataRecord.put("sign", MD5Util.string2MD5(dataRecord.toString() + MainActivity.CONTROL_KEY));
+            dataRecord.put("sign", MD5Util.string2MD5(dataRecord.toString() + "88437049439590280cfb16a048279391"));
             JSONObject json = new JSONObject(dataRecord);
-            upload(path, file, json, MainActivity.asyncHttpResponseHandler);
+            upload(path, file, json, httpResponseHandler);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -232,7 +234,9 @@ public class PushProcessing {
                 e.printStackTrace();
             }
             try {
-                new AsyncHttpClient().post("https://www.mosunshine.com/stream/control/um_filenormal", params, responseHandler);   //定时上传
+                AsyncHttpClient asyncHttpClient = new AsyncHttpClient();
+                asyncHttpClient.setConnectTimeout(60000);
+                asyncHttpClient.post("https://www.mosunshine.com/stream/control/um_filenormal", params, responseHandler);   //定时上传
             } catch (Exception e) {
                 e.printStackTrace();
             }

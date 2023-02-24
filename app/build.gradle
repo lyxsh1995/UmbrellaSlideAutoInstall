@@ -5,10 +5,10 @@ android {
     buildToolsVersion "27.0.3"
     defaultConfig {
         applicationId 'com.khkj.administrator.autoinstalllite'
-        minSdkVersion 22
+        minSdkVersion 19
         targetSdkVersion 23
         versionCode 1
-        versionName "1.4"
+        versionName "1.5"
         manifestPlaceholders = [
                 GETUI_APP_ID    : "3ohLYyeOjf51hyfJvnHS5A",
                 GETUI_APP_KEY   : "mzSyXPptJLAveuGOvhTLa6",

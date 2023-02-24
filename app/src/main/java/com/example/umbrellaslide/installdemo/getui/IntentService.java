@@ -13,6 +13,7 @@ import com.igexin.sdk.GTIntentService;
 import com.igexin.sdk.PushManager;
 import com.igexin.sdk.message.GTCmdMessage;
 import com.igexin.sdk.message.GTTransmitMessage;
+import com.loopj.android.http.AsyncHttpResponseHandler;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,6 +26,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+
+import cz.msebera.android.httpclient.Header;
 
 import static android.content.ContentValues.TAG;
 
@@ -39,6 +42,8 @@ import static android.content.ContentValues.TAG;
 public class IntentService extends GTIntentService {
 
     PushProcessing push;
+    AsyncHttpResponseHandler httpResponseHandler;
+
 
     public IntentService() {
 
@@ -69,7 +74,18 @@ public class IntentService extends GTIntentService {
                 addLog.addlog(TAG, "receiver payload = " + data);
                 JSONObject object = JSONAnalysis(data);
                 push = new PushProcessing();
-                push.Processing(context,object);
+                httpResponseHandler = new AsyncHttpResponseHandler() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                        addLog.addlog("自动升级程序", "上传", "成功", statusCode + "");
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                        addLog.addlog("自动升级程序", "上传", "失败", statusCode + "");
+                    }
+                };
+                push.Processing(context,object,httpResponseHandler);
 //                JSONArray obj = new JSONArray(object.optString("actionExt"));
 //                String respcode = object.optString("respcode");
                 // 测试消息为了观察数据变化
@@ -101,7 +117,7 @@ public class IntentService extends GTIntentService {
             try {
                 obj.put("terminal_no", MainActivity.terminal_no);
                 obj.put("getui_token", MainActivity.GTclientid);
-                obj.put("sign", MD5Util.string2MD5(obj.toString() + MainActivity.CONTROL_KEY));
+                obj.put("sign", MD5Util.string2MD5(obj.toString() + "88437049439590280cfb16a048279391"));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -133,7 +149,7 @@ public class IntentService extends GTIntentService {
     public String um_pushtoken(JSONObject obj) {
         try {
             //创建连接
-            URL url = new URL(MainActivity.serverURL + "um_pushtoken");
+            URL url = new URL( "https://www.mosunshine.com/Umbrella/Control/" + "um_pushtoken");
             HttpURLConnection connection = (HttpURLConnection) url
                     .openConnection();
             connection.setDoOutput(true);
